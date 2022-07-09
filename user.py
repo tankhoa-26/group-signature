@@ -1,13 +1,9 @@
-import utils
-import random
 import nacl.encoding
 import nacl.hash
 import secrets
 from cryptomath.Algorithms.Algorithms import ModularInv, FastPower
 
 HASHER = nacl.hash.sha256
-DEFAULT_BIT_LEN_RAND_ELEMENTS = 128
-
 class User:
     
     def __init__(self):
@@ -17,7 +13,7 @@ class User:
         self.e = 0
 
     #Join
-    #Joint1 func
+    #Joint1 function
     def gen_random_element(self, n, g, h, lambda_2):
         two_pow_lambda_2 = pow(2, lambda_2)
         self.x_ex = secrets.randbelow(two_pow_lambda_2)
@@ -26,23 +22,14 @@ class User:
         C1 = ((FastPower(g, self.x_ex, n)) * (FastPower(h, r_ex, n))) % n
         return C1, r_ex
 
+    #Join3 function
     def join3(self, a, n, alpha, beta, lambda_1, lambda_2):
         self.x = (FastPower(2, lambda_1, n) + (alpha * self.x_ex + beta % (pow(2, lambda_2)))) % n
         C2 = FastPower(a, self.x, n)
         return C2
-
+    
+    #Join5 function
     def join5(self, n, a, a0, A, e):
-        print("A: ", A)
-        print("e: ", e)
-        print("a: ", a)
-        print("a0: ", a0)
-        print("x: ", self.x)
-        print("n: ", n)
-
-        
-        print("left: ", FastPower(a, self.x, n) * a0 % n)
-        print("right: ", FastPower(A, e, n))
-        
         if ((FastPower(a, self.x, n) * a0 % n) == FastPower(A, e, n)):
             self.A = A
             self.e = e
@@ -50,7 +37,6 @@ class User:
         return False
     
     #Sign
-
     def sign(self, m, a, a0, g, h, y, l_p, n, lambda_1, lambda_2, gamma_1, gamma_2, epsilon, k):
         w = secrets.randbelow(2**(2 * l_p))
         T1 = self.A * FastPower(y, w, n)

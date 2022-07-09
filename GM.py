@@ -1,29 +1,12 @@
-import random
-import utils
-import numpy as np
-import math
 import secrets
+import json
 from cryptomath.Primality.Primality import IsSophieGermainPrime
 from cryptomath.Algorithms.Algorithms import ModularInv, ExtendedEuclidean, FastPower
-#from cryptomath.Polynomials.Polynomials import IsModSquare
 from libnum.libnum.sqrtmod import jacobi
 
-DEFAULT_BIT_LEN_RAND_ELEMENTS = 128
-#Define range
-# two_pow_lambda1 = utils.square_and_multiply(2, lambda_1)
-# two_pow_lambda2 = utils.square_and_multiply(2, lambda_2)
-# Lambda_range = range(two_pow_lambda1 - two_pow_lambda2, two_pow_lambda1 + two_pow_lambda2)
 
-# two_pow_gamma1 = utils.square_and_multiply(2, gamma_1)
-# two_pow_gamma2 = utils.square_and_multiply(2, gamma_2)
-# Gamma_range = range(two_pow_gamma1 - two_pow_gamma2, two_pow_gamma1 + two_pow_gamma2)
-
-
-
-#================================Setup=====================================
 class GroupManager:
     
-
     def __init__(self):
         self.n = 0
         self.certificate = []
@@ -31,8 +14,10 @@ class GroupManager:
         self.__q1 = 0
         self.__x = 0
         self.phi_n = 0
-        
+
+#======================Setup====================
     def genSysParam(self):
+        print("Generate system parameter....")
         epsilon = 1
         k = 256
         l_p = 512 #l_p is size of the modulus to use
@@ -42,6 +27,14 @@ class GroupManager:
         gamma_1 = epsilon * (gamma_2 + k) + 2 + 10
         return (lambda_1, lambda_2, gamma_1, gamma_2, epsilon, k, l_p)
 
+    def getSophieGermainPrime(self):
+        with open('SophieGermain.json', 'r') as f:
+            data = json.load(f)
+        index1 = secrets.randbelow(8)
+        index2 = secrets.randbelow(8)
+        while (index1 == index2):  index2 = secrets.randbelow(8)
+        return (int( data[str(index1)]), int( data[str(index2)]))
+
     def setup(self, l_p = 1024):
         '''
         Pha SETUP, tạo các tham số hệ thống và khóa
@@ -50,20 +43,26 @@ class GroupManager:
         is_prime = False
         two_pow_l_p = pow(2, l_p)
 
+        '''
+            Unlock code phía dưới để tìm số nguyên tố Sophie Germain
+            Từ đó tính được Safe Prime
+            Tuy nhiên việc tính toán số Sophie Germain mất nhiều thời gian nên để tiện cho việc test
+            ta gán cứng p1, q1 đã tìm được trước đó.
+        '''
         #Tìm P1 là số nguyên tố Sophie Germain
-        p1 = secrets.randbelow(two_pow_l_p)
+        #p1 = secrets.randbelow(two_pow_l_p)
         # while (not IsSophieGermainPrime(p1)):
         #     p1 = secrets.randbelow(two_pow_l_p)
         #     print("p1: ",p1)
-        p1 = 11913992813954122292846705488397400994148543238368066922328981995641536859131836165089551950115413367245873315591402906779651982711254789327773462801428899
-        p = p1 * 2 + 1
 
         #Tìm P2 là số nguyên tố Sophie Germain
-        q1 = secrets.randbelow(two_pow_l_p)
+        #q1 = secrets.randbelow(two_pow_l_p)
         # while (not IsSophieGermainPrime(q1)):
         #     q1 = secrets.randbelow(two_pow_l_p)
         #     print("q1: ", q1)
-        q1 = 11913992813954122292846705488397400994148543238368066922328981995641536859131836165089551950115413367245873315591402906779651982711254789327773462801428899
+        print("Setup....")
+        p1, q1 = self.getSophieGermainPrime()
+        p = p1 * 2 + 1
         q = q1 * 2 + 1
 
         self.__p1 = p1
@@ -84,7 +83,7 @@ class GroupManager:
 
         #Gom nhóm group public key 
         Y = (n, a, a0, y, g, h)
-        print("Setup complete...")
+        print("Setup complete....")
         return (Y)
 
 
@@ -131,6 +130,7 @@ class GroupManager:
 
     def join2(self, C1, n, lambda_2):
         two_pow_lambda2 = pow(2, lambda_2)
+
         if (self.is_in_cyclic_group(C1, n)):
             alpha = secrets.randbelow(two_pow_lambda2)
             beta = secrets.randbelow(two_pow_lambda2)
@@ -142,12 +142,13 @@ class GroupManager:
         if ( self.is_in_cyclic_group(C2, n)):
             two_pow_gamma1 = pow(2, gamma_1)
             two_pow_gamma2 = pow(2, gamma_2) 
+
             e = secrets.randbelow(2 * two_pow_gamma2) + two_pow_gamma1 - two_pow_gamma2
-            #A = (C2* self.a0)**(1/e)
             e_inv = ModularInv(e, self.phi_n)
-            print("phi n: ", self.phi_n)
             A = FastPower((C2 * a0), e_inv, n) 
+
             self.certificate.append((e,A))
+
             return (e, A)
         return (False, False)
 

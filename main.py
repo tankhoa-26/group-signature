@@ -1,36 +1,51 @@
-from email import message
-import random
-import utils
 from GM import GroupManager
 from user import User
 from verifier import Verifier
-import testJoin
+from sysParam import SystemParam
 
-# DEFAULT_BIT_LEN_RAND_ELEMENTS = 1024
-#pha setup
-group_manager =  GroupManager()
-Y = group_manager.setup(128)
-epsilon, k, lambda_1, l_p, lambda_2, gamma_1, gamma_2 = group_manager.getSysParam()
-n, a, a0, y, g, h = Y
-#Tạo user1
-user1 = User(epsilon, k, l_p, lambda_1, lambda_2, gamma_1, gamma_2, n, a, a0, y, g, h)
+groupManager = GroupManager()
+print("We start...........")
+#Set up
+systemParameter = groupManager.genSysParam() #GM tạo tham số hệ thống
+sParam = SystemParam(systemParameter) #Khởi tạo lớp tham số hệ thống dùng chung
+
+(n, a, a0, y, g, h) = groupManager.setup(512)
+print("n: ", n)
 #Join
-C1, x_ex, r_ex = user1.gen_random_element()
-alpha, beta = group_manager.join2(C1)
-C2 = user1.join3(alpha, beta, x_ex)
-e, A = group_manager.join4(C2)
-if (not user1.join5(A, e)): exit()
-#Sign
-secret_ = "helloman"
-c, s1, s2, s3, s4, T1, T2, T3 = user1.sign(secret_)
-print(c)
-print(s1)
-print(s2)
-print(s3)
-print(s4)
-print(T1)
-print(T2)
-print(T3)
-#Verify
-verifier1 = Verifier(epsilon, k, l_p, lambda_1, lambda_2, gamma_1, gamma_2, n, a, a0, y, g, h)
-verifier1.verify(c, s1, s2, s3, s4, T1, T2, T3, secret_)
+print("Join start.....")
+user1 = User()
+C1_is_in_cyclic_group = False
+while ( not C1_is_in_cyclic_group):
+    #Joint 1: generate secret exponent and calculate C1
+    print("User create C1")
+    C1, r_ex = user1.gen_random_element(n, g, h, sParam.lambda_2)
+    #Join2: user check C1 and gen random alpha & beta values
+    print("GM check C1 and create alpha, beta")
+    alpha, beta = groupManager.join2(C1, n, sParam.lambda_2)
+    if (alpha and beta): C1_is_in_cyclic_group = True
+
+C2_is_in_cyclic_group = False
+e = A = 0
+while ( not C2_is_in_cyclic_group):
+    #Join3: User calculate C2
+    print("User create C2")
+    C2 = user1.join3(a, n, alpha, beta, sParam.lambda_1, sParam.lambda_2)
+    #Join4: GM check C2 is in QR(n) --> create user certificate [Ai, ei]
+    print("GM check C2 and create member certificate")
+    e, A = groupManager.join4(C2, n, a0, sParam.gamma_1, sParam.gamma_2)
+    if (e and A): C2_is_in_cyclic_group = True
+
+print("Join OK: ",user1.join5(n, a, a0, A, e))
+
+
+#================Sign================================
+user1Message = "hallo man" 
+#signature format (c, s1, s2, s3, s4, T1, T2, T3)
+user1Signature = user1.sign(user1Message, a, a0, g, h, y, sParam.l_p, n, sParam.lambda_1, sParam.lambda_2, sParam.gamma_1, sParam.gamma_2, sParam.epsilon, sParam.k)
+print("Sign successful")
+print("Signature: ", user1Signature[0])
+#==========Verify signature==================
+
+verifier1 = Verifier()
+if (verifier1.verify(user1Signature[0], user1Signature[1], user1Signature[2], user1Signature[3], user1Signature[4], user1Signature[5], user1Signature[6], user1Signature[7], user1Message, a, a0, g, h, y, n, sParam.lambda_1, sParam.gamma_1) == 1): print("Yeah, verification successful")
+else: print("OOPS, Verification Failed")
