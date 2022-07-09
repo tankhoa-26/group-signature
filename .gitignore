@@ -1,0 +1,7 @@
+.*project
+.settings
+*.pyc
+dist
+build
+MANIFEST
+__pycache__
