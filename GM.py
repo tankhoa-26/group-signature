@@ -4,7 +4,7 @@ import numpy as np
 import math
 import secrets
 from cryptomath.Primality.Primality import IsSophieGermainPrime
-from cryptomath.Algorithms.Algorithms import ModularInv, ExtendedEuclidean
+from cryptomath.Algorithms.Algorithms import ModularInv, ExtendedEuclidean, FastPower
 #from cryptomath.Polynomials.Polynomials import IsModSquare
 from libnum.libnum.sqrtmod import jacobi
 
@@ -48,7 +48,7 @@ class GroupManager:
         '''
         
         is_prime = False
-        two_pow_l_p = utils.square_and_multiply(2, l_p)
+        two_pow_l_p = pow(2, l_p)
 
         #Tìm P1 là số nguyên tố Sophie Germain
         p1 = secrets.randbelow(two_pow_l_p)
@@ -104,13 +104,13 @@ class GroupManager:
         #Random 4 số mũ để tính 4 số a, a0, g, h
 
         ex1 = secrets.randbelow(self.phi_n)
-        a = utils.square_and_multiply(generator, ex1, n)
+        a = FastPower(generator, ex1, n)
         ex1 = secrets.randbelow(self.phi_n)
-        a0 = utils.square_and_multiply(generator, ex1, n)
+        a0 = FastPower(generator, ex1, n)
         ex1 = secrets.randbelow(self.phi_n)
-        g = utils.square_and_multiply(generator, ex1, n)
+        g = FastPower(generator, ex1, n)
         ex1 = secrets.randbelow(self.phi_n)
-        h = utils.square_and_multiply(generator, ex1, n)
+        h = FastPower(generator, ex1, n)
 
         return (a, a0, g, h)   
 
@@ -119,7 +119,7 @@ class GroupManager:
         self.__x = secrets.randbelow(self.phi_n)
 
         #y = g**x % n
-        y = utils.square_and_multiply(g, self.__x, n)
+        y = FastPower(g, self.__x, n)
         return (y)
 
 
@@ -129,16 +129,8 @@ class GroupManager:
         #Use Jacobi
         return (jacobi(element, n) == 1)
 
-    ''' 
-        Tạo ra 1 SNT trong đoạn Lamda_range
-    '''
-    def select_random_prime(self):
-        e = utils.generate_big_primes(int((self.lambda_1 + self.lambda_2)/2), 1) #e will in range Lambda_range
-        return e
-
-
     def join2(self, C1, n, lambda_2):
-        two_pow_lambda2 = utils.square_and_multiply(2, lambda_2)
+        two_pow_lambda2 = FastPower(2, lambda_2)
         if (self.is_in_cyclic_group(C1, n)):
             alpha = secrets.randbelow(two_pow_lambda2)
             beta = secrets.randbelow(two_pow_lambda2)
@@ -148,13 +140,13 @@ class GroupManager:
 
     def join4(self, C2, n, a0, gamma_1, gamma_2):
         if ( self.is_in_cyclic_group(C2, n)):
-            #e = self.select_random_prime()[0]
-            two_pow_gamma1 = utils.square_and_multiply(2, gamma_1)
-            two_pow_gamma2 = utils.square_and_multiply(2, gamma_2) 
+            two_pow_gamma1 = FastPower(2, gamma_1)
+            two_pow_gamma2 = FastPower(2, gamma_2) 
             e = secrets.randbelow(2 * two_pow_gamma2) + two_pow_gamma1 - two_pow_gamma2
             #A = (C2* self.a0)**(1/e)
             e_inv = ModularInv(e, self.phi_n)
-            A = utils.square_and_multiply((C2 * a0), e_inv, n) 
+            print("phi n: ", self.phi_n)
+            A = FastPower((C2 * a0), e_inv, n) 
             self.certificate.append((e,A))
             return (e, A)
         return (False, False)
