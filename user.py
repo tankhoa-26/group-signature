@@ -19,7 +19,7 @@ class User:
     #Join
     #Joint1 func
     def gen_random_element(self, n, g, h, lambda_2):
-        two_pow_lambda_2 = FastPower(2, lambda_2)
+        two_pow_lambda_2 = pow(2, lambda_2)
         self.x_ex = secrets.randbelow(two_pow_lambda_2)
         r_ex = secrets.randbelow(n ** 2)
         
@@ -27,7 +27,7 @@ class User:
         return C1, r_ex
 
     def join3(self, a, n, alpha, beta, lambda_1, lambda_2):
-        self.x = (FastPower(2, lambda_1, n) + (alpha * self.x_ex + beta % (FastPower(2, lambda_2)))) % n
+        self.x = (FastPower(2, lambda_1, n) + (alpha * self.x_ex + beta % (pow(2, lambda_2)))) % n
         C2 = FastPower(a, self.x, n)
         return C2
 

@@ -130,7 +130,7 @@ class GroupManager:
         return (jacobi(element, n) == 1)
 
     def join2(self, C1, n, lambda_2):
-        two_pow_lambda2 = FastPower(2, lambda_2)
+        two_pow_lambda2 = pow(2, lambda_2)
         if (self.is_in_cyclic_group(C1, n)):
             alpha = secrets.randbelow(two_pow_lambda2)
             beta = secrets.randbelow(two_pow_lambda2)
@@ -140,8 +140,8 @@ class GroupManager:
 
     def join4(self, C2, n, a0, gamma_1, gamma_2):
         if ( self.is_in_cyclic_group(C2, n)):
-            two_pow_gamma1 = FastPower(2, gamma_1)
-            two_pow_gamma2 = FastPower(2, gamma_2) 
+            two_pow_gamma1 = pow(2, gamma_1)
+            two_pow_gamma2 = pow(2, gamma_2) 
             e = secrets.randbelow(2 * two_pow_gamma2) + two_pow_gamma1 - two_pow_gamma2
             #A = (C2* self.a0)**(1/e)
             e_inv = ModularInv(e, self.phi_n)
